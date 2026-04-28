@@ -120,10 +120,15 @@ echo  [OK] Kokoro installed.
 echo  [OK] Chatterbox installed.
 echo.
 
-:: ── spaCy ────────────────────────────────────────────────────────────────────
-echo  Installing spaCy (language processing for Kokoro)...
-.venv\Scripts\pip install spacy --only-binary :all: --quiet --no-cache-dir
-echo  [OK] spaCy installed.
+:: ── spaCy (optional — Kokoro works without it) ───────────────────────────────
+echo  Installing spaCy (optional, improves Kokoro quality)...
+.venv\Scripts\pip install "spacy>=3.7,<4.0" --only-binary spacy,blis,thinc,cymem,murmurhash,preshed,srsly,catalogue --quiet --no-cache-dir
+if errorlevel 1 (
+    echo  [WARN] spaCy could not be installed ^(no binary wheel for your platform^).
+    echo  Kokoro will still work with slightly reduced pronunciation accuracy.
+) else (
+    echo  [OK] spaCy installed.
+)
 echo.
 
 :: ── HuggingFace token ────────────────────────────────────────────────────────
