@@ -1,5 +1,5 @@
 """
-Narrate Studio — ElevenLabs-style narration studio.
+OfflineNarrator — ElevenLabs-style narration studio.
 Per-segment voice control · replayable audio · full playback bar
 """
 import sys, os, re, json, uuid, shutil, tempfile
@@ -1383,7 +1383,7 @@ class StudioWindow(QMainWindow):
     def _update_title(self):
         name = Path(self._project_path).stem if self._project_path else "Untitled"
         dirty = " •" if self._dirty else ""
-        self.setWindowTitle(f"Narrate Studio — {name}{dirty}")
+        self.setWindowTitle(f"OfflineNarrator — {name}{dirty}")
 
     def _mark_dirty(self):
         if not self._dirty:
@@ -1445,7 +1445,7 @@ class StudioWindow(QMainWindow):
         row.setContentsMargins(12, 8, 12, 8)
         row.setSpacing(8)
 
-        title = QLabel("Narrate Studio")
+        title = QLabel("OfflineNarrator")
         title.setStyleSheet("color: #cba6f7; font-size: 16px; font-weight: bold;")
         row.addWidget(title)
         row.addSpacing(12)

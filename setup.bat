@@ -1,11 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
-title Narrate Studio — Setup
+title OfflineNarrator — Setup
 color 0B
 
 echo.
 echo  ===========================================
-echo    Narrate Studio — First-time Setup
+echo    OfflineNarrator — First-time Setup
 echo  ===========================================
 echo.
 
@@ -166,7 +166,7 @@ echo  ===========================================
 echo    Setup complete!
 echo  ===========================================
 echo.
-echo  Double-click run.bat to launch Narrate Studio.
+echo  Double-click run.bat to launch OfflineNarrator.
 echo.
 echo  First launch will download TTS models automatically:
 echo    Orpheus    ~6 GB  (requires HuggingFace token)

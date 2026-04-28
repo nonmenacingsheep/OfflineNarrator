@@ -1,10 +1,10 @@
-# Narrate Studio
+# OfflineNarrator
 
 A local, offline narration studio for Windows. Import a script, assign voices to each sentence, generate studio-quality audio, and export — no internet required after the first model download.
 
 Built with [Orpheus TTS](https://github.com/canopylabs/orpheus-tts), [Kokoro](https://github.com/hexgrad/kokoro), and [Chatterbox](https://github.com/resemble-ai/chatterbox).
 
-![Narrate Studio](assets/UI.PNG)
+![OfflineNarrator](assets/UI.PNG)
 
 ---
 
