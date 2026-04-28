@@ -105,15 +105,8 @@ if "%TORCH_OK%"=="0" (
 echo  [OK] PyTorch installed.
 echo.
 
-:: ── Core dependencies ─────────────────────────────────────────────────────────
-echo  Installing core dependencies...
-.venv\Scripts\pip install transformers accelerate snac soundfile PyQt6 numpy --quiet --no-cache-dir
-echo  [OK] Core dependencies installed.
-echo.
-
-:: ── TTS models ────────────────────────────────────────────────────────────────
+:: ── TTS models (installed first so their numpy/etc pins take priority) ────────
 :: Use --only-binary for spacy/thinc/blis so pip never tries to compile them from source.
-:: spaCy is an optional dep of Kokoro (better G2P); if no binary exists it is skipped.
 echo  Installing Kokoro...
 .venv\Scripts\pip install kokoro --only-binary spacy,thinc,blis,cymem,murmurhash,preshed,srsly,catalogue --quiet --no-cache-dir
 if errorlevel 1 (
@@ -127,6 +120,12 @@ echo  [OK] Kokoro installed.
 echo  Installing Chatterbox...
 .venv\Scripts\pip install chatterbox-tts --quiet --no-cache-dir
 echo  [OK] Chatterbox installed.
+echo.
+
+:: ── Core dependencies (installed after TTS packages to respect their version pins) ──
+echo  Installing core dependencies...
+.venv\Scripts\pip install transformers accelerate snac soundfile PyQt6 --quiet --no-cache-dir
+echo  [OK] Core dependencies installed.
 echo.
 
 :: ── HuggingFace token ────────────────────────────────────────────────────────
