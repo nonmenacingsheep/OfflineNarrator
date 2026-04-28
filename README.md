@@ -4,8 +4,6 @@ A local, offline narration studio for Windows. Import a script, assign voices to
 
 Built with [Orpheus TTS](https://github.com/canopylabs/orpheus-tts), [Kokoro](https://github.com/hexgrad/kokoro), and [Chatterbox](https://github.com/resemble-ai/chatterbox).
 
-![Orpheus model downloading on first launch](assets/Orpheus%20download.PNG)
-
 ![Narrate Studio](assets/UI.PNG)
 
 ---
