@@ -111,22 +111,20 @@ echo  Installing core dependencies...
 echo  [OK] Core dependencies installed.
 echo.
 
-:: ── spaCy (install before TTS packages so they don't try to build it from source) ──
-echo  Installing spaCy (optional, improves Kokoro quality)...
-.venv\Scripts\pip install "spacy>=3.7,<4.0" --only-binary spacy,blis,thinc,cymem,murmurhash,preshed,srsly,catalogue --quiet --no-cache-dir
-if errorlevel 1 (
-    echo  [WARN] spaCy could not be installed ^(no binary wheel for your platform^).
-    echo  Kokoro will still work with slightly reduced pronunciation accuracy.
-) else (
-    echo  [OK] spaCy installed.
-)
-echo.
-
 :: ── TTS models ────────────────────────────────────────────────────────────────
-echo  Installing TTS model packages...
-.venv\Scripts\pip install kokoro --quiet --no-cache-dir
+:: Use --only-binary for spacy/thinc/blis so pip never tries to compile them from source.
+:: spaCy is an optional dep of Kokoro (better G2P); if no binary exists it is skipped.
+echo  Installing Kokoro...
+.venv\Scripts\pip install kokoro --only-binary spacy,thinc,blis,cymem,murmurhash,preshed,srsly,catalogue --quiet --no-cache-dir
+if errorlevel 1 (
+    echo  [WARN] Kokoro install had issues. Trying without spaCy...
+    .venv\Scripts\pip install kokoro --no-deps --quiet --no-cache-dir
+    .venv\Scripts\pip install "misaki[en]" --only-binary spacy,thinc,blis,cymem,murmurhash,preshed,srsly,catalogue --quiet --no-cache-dir 2>nul
+    .venv\Scripts\pip install loguru einops piper-phonemize --quiet --no-cache-dir 2>nul
+)
 echo  [OK] Kokoro installed.
 
+echo  Installing Chatterbox...
 .venv\Scripts\pip install chatterbox-tts --quiet --no-cache-dir
 echo  [OK] Chatterbox installed.
 echo.
