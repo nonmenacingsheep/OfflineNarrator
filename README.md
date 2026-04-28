@@ -38,7 +38,7 @@ I made this for myself using Claude, but I figured someone else might be able to
 
 3. **Double-click `run.bat`** to launch the app.
 
-> On first launch, each model you use will download automatically and be cached for all future runs. Orpheus is ~14 GB, so the first generation will take a while — subsequent ones are fast.
+> On first launch, each model you use will download automatically and be cached for all future runs. Orpheus is ~14 GB, so the first generation will take a while — subsequent ones are faster.
 
 ---
 
@@ -117,9 +117,9 @@ The **colour-coded timeline** at the bottom shows which voice is speaking at eve
 
 ### Saving & loading projects
 
-Use **💾 Save** and **📁 Load** to save your work as a `.ttsproj` file. This saves everything — segments, text, voice assignments, settings, and all generated audio. When you reload a project, audio that was already generated plays immediately without re-generating.
+Use **💾 Save** and **📁 Load** to save your work as a `.ttsproj` file. This saves everything — segments, text, voice assignments, settings, and all generated audio.
 
-> **Note:** Generated audio is embedded in the project file, so `.ttsproj` files can get large for long projects (~500 KB per minute of audio per segment).
+> **Note:** Generated audio is embedded in the project file, so `.ttsproj` files can get large for long projects (~500 KB per minute of audio).
 
 ---
 
@@ -127,9 +127,9 @@ Use **💾 Save** and **📁 Load** to save your work as a `.ttsproj` file. This
 
 | Model | Voice quality | Notes |
 |---|---|---|
-| **Orpheus** | ⭐⭐⭐⭐⭐ | Best expressiveness. Supports emotion tags. ~14 GB. Requires HF token. |
+| **Orpheus** | ⭐⭐⭐⭐⭐ | Ultra expressive with emotion tags, takes the longest to generate and uses the most vram. ~14 GB. Requires HF token. |
 | **Kokoro** | ⭐⭐⭐⭐ | Fast, high quality, many voices. ~400 MB. No account needed. |
-| **Chatterbox** | ⭐⭐⭐⭐ | Voice cloning from a reference clip. ~3 GB. No account needed. |
+| **Chatterbox** | ⭐⭐⭐⭐ | Voice cloning from a reference clip for more customization. ~3 GB. No account needed. |
 
 ### Orpheus emotion tags
 
@@ -147,7 +147,7 @@ Copy buttons for all tags are in the Orpheus voice card.
 
 - **Long paragraphs** are fine — Orpheus automatically splits them into sentences internally and joins the audio seamlessly.
 - **Voice panel** can be collapsed with the **◀** button to give more room to the segment list.
-- A **•** in the title bar means you have unsaved changes.
+- A **•** in the title bar (where the minimize, fullscreen, and close buttons are.) means you have unsaved changes.
 - The segment list shows `x/total` numbering and a coloured status dot: ○ pending · ◌ generating · ● done · ● error.
 
 ---
