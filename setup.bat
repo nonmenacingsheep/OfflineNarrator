@@ -14,7 +14,7 @@ python --version >nul 2>&1
 if errorlevel 1 (
     echo  [ERROR] Python was not found.
     echo.
-    echo  Please install Python 3.10 or newer from:
+    echo  Please install Python 3.10, 3.11, 3.12, or 3.13 from:
     echo    https://www.python.org/downloads/
     echo.
     echo  Make sure to tick "Add Python to PATH" during install.
@@ -24,6 +24,38 @@ if errorlevel 1 (
 
 for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PY_VER=%%v
 echo  [OK] Found Python %PY_VER%
+
+:: Parse major.minor
+for /f "tokens=1,2 delims=." %%a in ("%PY_VER%") do (
+    set PY_MAJOR=%%a
+    set PY_MINOR=%%b
+)
+
+:: Warn if Python version is unsupported
+if %PY_MAJOR% LSS 3 (
+    echo  [ERROR] Python 3.10 or newer is required.
+    pause
+    exit /b 1
+)
+if %PY_MAJOR% EQU 3 (
+    if %PY_MINOR% LSS 10 (
+        echo  [ERROR] Python 3.10 or newer is required. You have %PY_VER%.
+        pause
+        exit /b 1
+    )
+    if %PY_MINOR% GEQ 14 (
+        echo.
+        echo  [ERROR] Python %PY_VER% is too new — PyTorch does not support it yet.
+        echo.
+        echo  Please install Python 3.12 or 3.13 from:
+        echo    https://www.python.org/downloads/
+        echo.
+        echo  You can have multiple Python versions installed at once.
+        echo  After installing 3.12/3.13, run this setup again.
+        pause
+        exit /b 1
+    )
+)
 echo.
 
 :: ── Create virtual environment ────────────────────────────────────────────────
@@ -43,76 +75,81 @@ echo.
 
 :: ── Upgrade pip ───────────────────────────────────────────────────────────────
 echo  Upgrading pip...
-.venv\Scripts\python.exe -m pip install --upgrade pip --quiet
+.venv\Scripts\python.exe -m pip install --upgrade pip --quiet --no-warn-script-location
 echo  [OK] pip up to date.
 echo.
 
-:: ── PyTorch (CUDA 12.4) ───────────────────────────────────────────────────────
-echo  Installing PyTorch with CUDA 12.4 support...
+:: ── PyTorch (try CUDA versions in order, fall back to CPU) ───────────────────
+echo  Installing PyTorch with GPU (CUDA) support...
 echo  (Downloading ~2.5 GB — this will take a few minutes)
 echo.
-.venv\Scripts\pip install ^
-    torch==2.6.0+cu124 ^
-    torchvision==0.21.0+cu124 ^
-    torchaudio==2.6.0+cu124 ^
-    --index-url https://download.pytorch.org/whl/cu124 ^
-    --quiet
 
-if errorlevel 1 (
+set TORCH_OK=0
+
+echo  Trying CUDA 12.8...
+.venv\Scripts\pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 --quiet --no-cache-dir
+if not errorlevel 1 set TORCH_OK=1
+
+if "%TORCH_OK%"=="0" (
+    echo  Trying CUDA 12.4...
+    .venv\Scripts\pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124 --quiet --no-cache-dir
+    if not errorlevel 1 set TORCH_OK=1
+)
+
+if "%TORCH_OK%"=="0" (
+    echo  Trying CUDA 12.1...
+    .venv\Scripts\pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 --quiet --no-cache-dir
+    if not errorlevel 1 set TORCH_OK=1
+)
+
+if "%TORCH_OK%"=="0" (
     echo.
-    echo  [WARN] CUDA build failed. Falling back to CPU-only PyTorch.
+    echo  [WARN] No CUDA build found. Installing CPU-only PyTorch.
     echo  The app will work but generation will be very slow without a GPU.
     echo.
-    .venv\Scripts\pip install torch torchvision torchaudio --quiet
+    .venv\Scripts\pip install torch torchvision torchaudio --quiet --no-cache-dir
 )
+
 echo  [OK] PyTorch installed.
 echo.
 
 :: ── Core dependencies ─────────────────────────────────────────────────────────
 echo  Installing core dependencies...
-.venv\Scripts\pip install ^
-    transformers ^
-    accelerate ^
-    snac ^
-    soundfile ^
-    PyQt6 ^
-    numpy ^
-    --quiet
+.venv\Scripts\pip install transformers accelerate snac soundfile PyQt6 numpy --quiet --no-cache-dir
 echo  [OK] Core dependencies installed.
 echo.
 
 :: ── TTS models ────────────────────────────────────────────────────────────────
 echo  Installing TTS model packages...
-.venv\Scripts\pip install kokoro --quiet
+.venv\Scripts\pip install kokoro --quiet --no-cache-dir
 echo  [OK] Kokoro installed.
 
-.venv\Scripts\pip install chatterbox-tts --quiet
+.venv\Scripts\pip install chatterbox-tts --quiet --no-cache-dir
 echo  [OK] Chatterbox installed.
 echo.
 
-:: ── spaCy (binary wheel only — avoids build errors) ──────────────────────────
+:: ── spaCy ────────────────────────────────────────────────────────────────────
 echo  Installing spaCy (language processing for Kokoro)...
-.venv\Scripts\pip install spacy --only-binary :all: --quiet
+.venv\Scripts\pip install spacy --only-binary :all: --quiet --no-cache-dir
 echo  [OK] spaCy installed.
 echo.
 
-:: ── HuggingFace token (for Orpheus) ──────────────────────────────────────────
+:: ── HuggingFace token ────────────────────────────────────────────────────────
 echo  ===========================================
 echo    HuggingFace Token (Orpheus model)
 echo  ===========================================
 echo.
-echo  The Orpheus TTS model is hosted on HuggingFace and requires
-echo  a free account + access approval.
+echo  The Orpheus TTS model requires a free HuggingFace account.
 echo.
 echo  Steps:
 echo    1. Create a free account at  https://huggingface.co
-echo    2. Visit this model page and click "Request access":
+echo    2. Request access at:
 echo         https://huggingface.co/canopylabs/orpheus-tts-0.1-finetune-prod
-echo    3. Once approved, go to  https://huggingface.co/settings/tokens
-echo       and create a Read token.
+echo    3. Once approved, create a Read token at:
+echo         https://huggingface.co/settings/tokens
 echo    4. Paste it below.
 echo.
-echo  (You can skip this now and add your token to hf_token.txt later.)
+echo  (You can skip this and add your token to hf_token.txt later.)
 echo.
 
 if exist "hf_token.txt" (
@@ -124,23 +161,22 @@ if exist "hf_token.txt" (
         echo  [OK] Token saved to hf_token.txt
     ) else (
         echo.> hf_token.txt
-        echo  [SKIP] You can add your token to hf_token.txt later.
+        echo  [SKIP] Add your token to hf_token.txt later.
     )
 )
 echo.
 
-:: ── Done ──────────────────────────────────────────────────────────────────────
+:: ── Done ─────────────────────────────────────────────────────────────────────
 echo.
 echo  ===========================================
 echo    Setup complete!
 echo  ===========================================
 echo.
-echo  To launch Narrate Studio, double-click  run.bat
+echo  Double-click run.bat to launch Narrate Studio.
 echo.
-echo  First launch notes:
-echo    - Orpheus model:    ~6 GB download on first use
-echo    - Kokoro model:     ~400 MB download on first use
-echo    - Chatterbox model: ~1 GB download on first use
-echo    - Models are cached locally after the first download.
+echo  First launch will download TTS models automatically:
+echo    Orpheus    ~6 GB  (requires HuggingFace token)
+echo    Kokoro     ~400 MB
+echo    Chatterbox ~1 GB
 echo.
 pause

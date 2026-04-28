@@ -9,7 +9,8 @@ Built with [Orpheus TTS](https://github.com/canopylabs/orpheus-tts), [Kokoro](ht
 ## Requirements
 
 - **Windows 10/11**
-- **Python 3.10 or newer** — [python.org](https://www.python.org/downloads/) *(tick "Add Python to PATH")*
+- **Python 3.10, 3.11, 3.12, or 3.13** — [python.org](https://www.python.org/downloads/) *(tick "Add Python to PATH")*
+  > ⚠️ Python 3.14+ is not supported yet — PyTorch does not have wheels for it.
 - **NVIDIA GPU strongly recommended** — an RTX card will generate in seconds; CPU works but is very slow
 - **~10 GB free disk space** for model downloads (cached locally after first run)
 - A free **HuggingFace account** for the Orpheus model (see setup)
