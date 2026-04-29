@@ -494,7 +494,7 @@ class SegmentWidget(QFrame):
     voice_change_requested = pyqtSignal(str, str)
     text_edited            = pyqtSignal(str, str)
     delete_requested       = pyqtSignal(str)
-    add_below_requested    = pyqtSignal(str)
+    add_above_requested    = pyqtSignal(str)
     selection_toggled      = pyqtSignal(str, bool)
     split_requested        = pyqtSignal(str, int)   # seg_id, cursor_pos (-1 = auto)
     merge_requested        = pyqtSignal(str)         # merge with next
@@ -737,8 +737,8 @@ class SegmentWidget(QFrame):
             act.setData(vid)
 
         menu.addSeparator()
-        menu.addAction("➕  Add segment below",
-                       lambda: self.add_below_requested.emit(self._seg.id))
+        menu.addAction("➕  Add segment above",
+                       lambda: self.add_above_requested.emit(self._seg.id))
         menu.addAction("🗑  Delete",
                        lambda: self.delete_requested.emit(self._seg.id))
 
@@ -1572,7 +1572,7 @@ class StudioWindow(QMainWindow):
         w = SegmentWidget(seg, self._voices, self._seg_container)
         w.regenerate_requested.connect(self._on_regen_one)
         w.delete_requested.connect(self._delete_segment)
-        w.add_below_requested.connect(self._add_blank_below)
+        w.add_above_requested.connect(self._add_blank_above)
         w.selection_toggled.connect(self._on_selection_toggled)
         w.split_requested.connect(self._split_segment)
         w.merge_requested.connect(self._merge_with_next)
@@ -1608,9 +1608,9 @@ class StudioWindow(QMainWindow):
             self._empty_lbl.show()
         self._mark_dirty()
 
-    def _add_blank_below(self, ref_id: str):
+    def _add_blank_above(self, ref_id: str):
         idx = next((i for i, s in enumerate(self._segments) if s.id == ref_id), -1)
-        self._add_segment(Segment(voice_id=self._first_voice_id()), index=idx + 1)
+        self._add_segment(Segment(voice_id=self._first_voice_id()), index=idx)
 
     def _add_blank_at_end(self):
         self._add_segment(Segment(voice_id=self._first_voice_id()))
@@ -1688,6 +1688,7 @@ class StudioWindow(QMainWindow):
         self._segments.insert(target, seg)
         self._seg_layout.insertWidget(target, w)
         self._renumber()
+        self._rebuild_playback()
         self._mark_dirty()
 
     def _renumber(self):
