@@ -1375,7 +1375,6 @@ class StudioWindow(QMainWindow):
         self._temp_wav: str      = ""
         self._playback_map: list = []
         self._last_playing_id    = None
-        self._suppress_scroll    = False
         self._dirty: bool        = False
         self._project_path: str  = ""
         self._seg_scroll         = None   # set in _build_segments_panel
@@ -1951,10 +1950,14 @@ class StudioWindow(QMainWindow):
         sf.write(tmp.name, combined, 24000)
         tmp.close()
         self._temp_wav = tmp.name
-        self._suppress_scroll = True
         self._pb.load(self._temp_wav)
         self._pb.load_timeline(timeline_map)
-        QTimer.singleShot(200, lambda: setattr(self, '_suppress_scroll', False))
+        # Clear any playing highlight and pre-set _last_playing_id to the
+        # first segment so the async positionChanged(0) from setSource is
+        # treated as "no change" and doesn't scroll to the top.
+        if self._last_playing_id and self._last_playing_id in self._widgets:
+            self._widgets[self._last_playing_id].set_playing(False)
+        self._last_playing_id = self._playback_map[0][2] if self._playback_map else None
 
     def _on_playback_pos(self, ms: int):
         playing_id = None
@@ -1970,7 +1973,7 @@ class StudioWindow(QMainWindow):
         if playing_id and playing_id in self._widgets:
             w = self._widgets[playing_id]
             w.set_playing(True)
-            if self._seg_scroll and not self._suppress_scroll:
+            if self._seg_scroll:
                 self._seg_scroll.ensureWidgetVisible(w)
 
     # ── Import ────────────────────────────────────────────────────────────────
