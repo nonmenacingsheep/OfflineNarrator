@@ -1381,6 +1381,7 @@ class StudioWindow(QMainWindow):
         self._temp_wav: str      = ""
         self._playback_map: list = []
         self._last_playing_id    = None
+        self._loading_audio      = False
         self._dirty: bool        = False
         self._project_path: str  = ""
         self._seg_scroll         = None   # set in _build_segments_panel
@@ -1956,23 +1957,31 @@ class StudioWindow(QMainWindow):
         sf.write(tmp.name, combined, 24000)
         tmp.close()
         self._temp_wav = tmp.name
-        # Save scroll position and restore it once the player finishes loading
-        # the new source (positionChanged fires spuriously during setSource,
-        # potentially scrolling the list to the top).
+        # Block _on_playback_pos entirely while the player loads the new source.
+        # positionChanged fires spuriously (at the old seek position, then at 0)
+        # both before and after LoadedMedia. We suppress all of it, then after
+        # LoadedMedia we restore the scroll and prime _last_playing_id to the
+        # first segment so any late positionChanged(0) is a no-op.
         saved_scroll = (self._seg_scroll.verticalScrollBar().value()
                         if self._seg_scroll else 0)
-        def _restore_scroll():
+        self._loading_audio = True
+        def _on_loaded():
             try:
-                self._pb.media_loaded.disconnect(_restore_scroll)
+                self._pb.media_loaded.disconnect(_on_loaded)
             except Exception:
                 pass
+            self._loading_audio = False
+            self._last_playing_id = (self._playback_map[0][2]
+                                     if self._playback_map else None)
             if self._seg_scroll:
                 self._seg_scroll.verticalScrollBar().setValue(saved_scroll)
-        self._pb.media_loaded.connect(_restore_scroll)
+        self._pb.media_loaded.connect(_on_loaded)
         self._pb.load(self._temp_wav)
         self._pb.load_timeline(timeline_map)
 
     def _on_playback_pos(self, ms: int):
+        if self._loading_audio:
+            return
         playing_id = None
         for start, end, sid in self._playback_map:
             if start <= ms < end:
