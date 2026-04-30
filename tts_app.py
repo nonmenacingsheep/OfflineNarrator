@@ -501,6 +501,7 @@ class SegmentWidget(QFrame):
     duplicate_requested    = pyqtSignal(str)
     silence_requested      = pyqtSignal(str)
     play_from_requested    = pyqtSignal(str)
+    regen_voice_requested  = pyqtSignal(str)   # seg_id — regenerate all segs with same voice
 
     def __init__(self, segment: Segment, voices: dict, parent=None):
         super().__init__(parent)
@@ -715,6 +716,8 @@ class SegmentWidget(QFrame):
         menu.addSeparator()
         menu.addAction("✏️  Edit",       self._start_edit)
         menu.addAction("↺  Regenerate", lambda: self.regenerate_requested.emit(self._seg.id))
+        menu.addAction("↺  Regenerate all with this voice",
+                       lambda: self.regen_voice_requested.emit(self._seg.id))
         menu.addSeparator()
 
         if self._editing:
@@ -1605,6 +1608,7 @@ class StudioWindow(QMainWindow):
         w.delete_requested.connect(self._delete_segment)
         w.add_above_requested.connect(self._add_blank_above)
         w.play_from_requested.connect(self._on_play_from)
+        w.regen_voice_requested.connect(self._on_regen_voice)
         w.selection_toggled.connect(self._on_selection_toggled)
         w.split_requested.connect(self._split_segment)
         w.merge_requested.connect(self._merge_with_next)
@@ -1830,6 +1834,18 @@ class StudioWindow(QMainWindow):
         seg = next((s for s in self._segments if s.id == seg_id), None)
         if seg:
             self._start_generation([seg])
+
+    def _on_regen_voice(self, seg_id: str):
+        """Regenerate every segment that shares the same voice as seg_id."""
+        ref = next((s for s in self._segments if s.id == seg_id), None)
+        if not ref:
+            return
+        segs = [s for s in self._segments if s.voice_id == ref.voice_id]
+        if segs:
+            voice_name = self._voices.get(ref.voice_id, type("", (), {"name": "?"})()).name
+            self.statusBar().showMessage(
+                f"Regenerating {len(segs)} segment(s) with voice '{voice_name}'…")
+            self._start_generation(segs)
 
     def _start_generation(self, segs: list):
         if not segs:
