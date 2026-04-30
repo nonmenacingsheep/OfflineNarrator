@@ -1214,6 +1214,7 @@ class SegmentTimeline(QWidget):
 
 class PlaybackBar(QWidget):
     position_changed = pyqtSignal(int)
+    media_loaded     = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1287,6 +1288,7 @@ class PlaybackBar(QWidget):
         self._player.positionChanged.connect(self._on_pos)
         self._player.durationChanged.connect(self._on_dur)
         self._player.playbackStateChanged.connect(self._on_state)
+        self._player.mediaStatusChanged.connect(self._on_media_status)
         self.btn_play.clicked.connect(self._toggle)
         self.btn_back.clicked.connect(lambda: self._seek_rel(-10000))
         self.btn_fwd.clicked.connect(lambda:  self._seek_rel( 10000))
@@ -1348,6 +1350,10 @@ class PlaybackBar(QWidget):
     def _on_state(self, state):
         self.btn_play.setText(
             "⏸" if state == QMediaPlayer.PlaybackState.PlayingState else "▶")
+
+    def _on_media_status(self, status):
+        if status == QMediaPlayer.MediaStatus.LoadedMedia:
+            self.media_loaded.emit()
 
     def _on_speed(self, idx: int):
         if self._player:
@@ -1950,14 +1956,21 @@ class StudioWindow(QMainWindow):
         sf.write(tmp.name, combined, 24000)
         tmp.close()
         self._temp_wav = tmp.name
+        # Save scroll position and restore it once the player finishes loading
+        # the new source (positionChanged fires spuriously during setSource,
+        # potentially scrolling the list to the top).
+        saved_scroll = (self._seg_scroll.verticalScrollBar().value()
+                        if self._seg_scroll else 0)
+        def _restore_scroll():
+            try:
+                self._pb.media_loaded.disconnect(_restore_scroll)
+            except Exception:
+                pass
+            if self._seg_scroll:
+                self._seg_scroll.verticalScrollBar().setValue(saved_scroll)
+        self._pb.media_loaded.connect(_restore_scroll)
         self._pb.load(self._temp_wav)
         self._pb.load_timeline(timeline_map)
-        # Clear any playing highlight and pre-set _last_playing_id to the
-        # first segment so the async positionChanged(0) from setSource is
-        # treated as "no change" and doesn't scroll to the top.
-        if self._last_playing_id and self._last_playing_id in self._widgets:
-            self._widgets[self._last_playing_id].set_playing(False)
-        self._last_playing_id = self._playback_map[0][2] if self._playback_map else None
 
     def _on_playback_pos(self, ms: int):
         playing_id = None
