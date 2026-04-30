@@ -1375,6 +1375,7 @@ class StudioWindow(QMainWindow):
         self._temp_wav: str      = ""
         self._playback_map: list = []
         self._last_playing_id    = None
+        self._suppress_scroll    = False
         self._dirty: bool        = False
         self._project_path: str  = ""
         self._seg_scroll         = None   # set in _build_segments_panel
@@ -1950,12 +1951,10 @@ class StudioWindow(QMainWindow):
         sf.write(tmp.name, combined, 24000)
         tmp.close()
         self._temp_wav = tmp.name
-        scroll_pos = (self._seg_scroll.verticalScrollBar().value()
-                      if self._seg_scroll else 0)
+        self._suppress_scroll = True
         self._pb.load(self._temp_wav)
         self._pb.load_timeline(timeline_map)
-        if self._seg_scroll:
-            self._seg_scroll.verticalScrollBar().setValue(scroll_pos)
+        QTimer.singleShot(200, lambda: setattr(self, '_suppress_scroll', False))
 
     def _on_playback_pos(self, ms: int):
         playing_id = None
@@ -1971,7 +1970,7 @@ class StudioWindow(QMainWindow):
         if playing_id and playing_id in self._widgets:
             w = self._widgets[playing_id]
             w.set_playing(True)
-            if self._seg_scroll:
+            if self._seg_scroll and not self._suppress_scroll:
                 self._seg_scroll.ensureWidgetVisible(w)
 
     # ── Import ────────────────────────────────────────────────────────────────
